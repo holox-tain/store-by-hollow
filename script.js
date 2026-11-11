@@ -1,3 +1,4 @@
+// 1. Banner Promo
 const disc = 20;
 const code = 'HOLLOW20';
 const info = document.querySelector('.banner');
@@ -6,6 +7,7 @@ if (info) {
     info.innerHTML = `Dapatkan diskon <span class="disc"> ${disc}%</span> dengan kode <span class="code"><strong><i>${code}</i></strong></span>, klaim sekarang juga!`;
 }
 
+// 2. Asset & Daftar Game Utama
 const BASE_CDN = "https://cdn.jsdelivr.net/gh/saranaweb/gig/asset";
 
 const list = [
@@ -18,7 +20,104 @@ const list = [
     { id: "rbx", name: "Roblox", icon: `${BASE_CDN}/rbx.png` }
 ];
 
-// Render Katalog di index.html
+// 3. Database Local Config Form & Produk (Servis Sendiri di Frontend)
+const GAME_CONFIGS = {
+    'mlbb': {
+        name: 'Mobile Legends',
+        inputs: [
+            { key: 'userId', type: 'number', placeholder: 'Masukkan User ID' },
+            { key: 'zoneId', type: 'number', placeholder: 'Masukkan Zone ID (4-5 digit)' }
+        ],
+        products: [
+            { code: 'ML86', name: '86 Diamonds' },
+            { code: 'ML172', name: '172 Diamonds' },
+            { code: 'ML257', name: '257 Diamonds' },
+            { code: 'MLWDP', name: 'Weekly Pass' }
+        ]
+    },
+    'ff': {
+        name: 'Free Fire',
+        inputs: [
+            { key: 'userId', type: 'number', placeholder: 'Masukkan Player ID' }
+        ],
+        products: [
+            { code: 'FF50', name: '50 Diamonds' },
+            { code: 'FF140', name: '140 Diamonds' },
+            { code: 'FF355', name: '355 Diamonds' }
+        ]
+    },
+    'pubg': {
+        name: 'PUBG Mobile',
+        inputs: [
+            { key: 'userId', type: 'number', placeholder: 'Masukkan Player ID' }
+        ],
+        servers: [
+            { name: 'Global', value: 'global' },
+            { name: 'Indonesia', value: 'id' }
+        ],
+        products: [
+            { code: 'PUBG60', name: '60 UC' },
+            { code: 'PUBG325', name: '325 UC' },
+            { code: 'PUBG660', name: '660 UC' }
+        ]
+    },
+    'cod': {
+        name: 'Call of Duty Mobile',
+        inputs: [
+            { key: 'userId', type: 'number', placeholder: 'Masukkan OpenID / User ID' }
+        ],
+        products: [
+            { code: 'COD31', name: '31 CP' },
+            { code: 'COD63', name: '63 CP' },
+            { code: 'COD128', name: '128 CP' }
+        ]
+    },
+    'gi': {
+        name: 'Genshin Impact',
+        inputs: [
+            { key: 'userId', type: 'number', placeholder: 'Masukkan User ID (UID)' }
+        ],
+        servers: [
+            { name: 'Asia (os_asia)', value: 'os_asia' },
+            { name: 'America (os_usa)', value: 'os_usa' },
+            { name: 'Europe (os_euro)', value: 'os_euro' },
+            { name: 'TW/HK/MO (os_cht)', value: 'os_cht' }
+        ],
+        products: [
+            { code: 'GI60', name: '60 Genesis Crystals' },
+            { code: 'GI300', name: '300 Genesis Crystals' },
+            { code: 'GIBLESSING', name: 'Blessing of the Welkin Moon' }
+        ]
+    },
+    'hi': {
+        name: 'Honkai Impact 3rd',
+        inputs: [
+            { key: 'userId', type: 'number', placeholder: 'Masukkan User ID (UID)' }
+        ],
+        servers: [
+            { name: 'Asia', value: 'asia' },
+            { name: 'America', value: 'america' },
+            { name: 'Europe', value: 'europe' }
+        ],
+        products: [
+            { code: 'HI65', name: '65 Crystals' },
+            { code: 'HI330', name: '330 Crystals' }
+        ]
+    },
+    'rbx': {
+        name: 'Roblox',
+        inputs: [
+            { key: 'userId', type: 'text', placeholder: 'Masukkan Username / User ID Roblox' }
+        ],
+        products: [
+            { code: 'RBX80', name: '80 Robux' },
+            { code: 'RBX400', name: '400 Robux' },
+            { code: 'RBX800', name: '800 Robux' }
+        ]
+    }
+};
+
+// 4. Render Katalog di index.html
 const gameList = document.querySelector('#gameList');
 if (gameList) {
     gameList.innerHTML = list.map(game => `
@@ -29,7 +128,7 @@ if (gameList) {
     `).join("");
 }
 
-// Handler Halaman Transaksi
+// 5. Inisialisasi Halaman Transaksi (transaction.html)
 const orderLabel = document.querySelector('.order-label');
 const inputFill = document.querySelector('.input');
 
@@ -40,42 +139,36 @@ if (orderLabel && inputFill) {
     if (!pickGameId) {
         orderLabel.innerHTML = `<h1>Pilih game terlebih dahulu</h1>`;
     } else {
-        const pick = list.find(item => item.id.toLowerCase() === pickGameId.toLowerCase());
-        if (pick) {
+        const gameKey = pickGameId.toLowerCase();
+        const pick = list.find(item => item.id.toLowerCase() === gameKey);
+
+        if (pick && GAME_CONFIGS[gameKey]) {
             orderLabel.innerHTML = `<span class="label-t">Transaksi ${pick.name}</span>`;
-            loadDynamicForm(pickGameId);
+            loadDynamicForm(gameKey);
         } else {
             orderLabel.innerHTML = `<span class="label-t">Transaksi tidak valid</span>`;
         }
     }
 }
 
-// Fetch Konfigurasi Form dari Endpoint Backend
-async function loadDynamicForm(gameId) {
-    try {
-        const res = await fetch(`/api/game-config/${gameId}`);
-        const data = await res.json();
-
-        if (!data.success) {
-            inputFill.innerHTML = `<p style="color:red; text-align:center;">${data.message}</p>`;
-            return;
-        }
-
-        renderFormHTML(data.config);
-        attachActiveListeners();
-    } catch (err) {
-        console.error('Error memuat form game:', err);
+// 6. Load Form Langsung dari Config Lokal
+function loadDynamicForm(gameId) {
+    const config = GAME_CONFIGS[gameId];
+    if (!config) {
+        inputFill.innerHTML = `<p style="color:red; text-align:center;">Konfigurasi game tidak ditemukan.</p>`;
+        return;
     }
+
+    renderFormHTML(config);
+    attachActiveListeners();
 }
 
-// Render HTML Dinamis (Pilihan Input, Server, Produk, Pembayaran)
+// 7. Render HTML Dinamis
 function renderFormHTML(config) {
-    // 1. Render Input Akun Dinamis (hanya sesuai array inputs di config)
     const inputsHTML = config.inputs.map(input => `
         <input type="${input.type}" data-key="${input.key}" placeholder="${input.placeholder}" class="input-box game-input" required>
     `).join('');
 
-    // 2. Render Pilihan Server jika ada (menggunakan class .pick)
     let serverStepHTML = '';
     if (config.servers && config.servers.length > 0) {
         const serverPicks = config.servers.map(srv => `
@@ -92,7 +185,6 @@ function renderFormHTML(config) {
         `;
     }
 
-    // 3. Render Pilihan Nominal Produk (menggunakan class .pick)
     const productsHTML = config.products.map(prod => `
         <div class="pick product-pick" data-kode="${prod.code}">${prod.name}</div>
     `).join('');
@@ -135,7 +227,7 @@ function renderFormHTML(config) {
     `;
 }
 
-// Listerner Tombol Active (Per-Group Container agar tidak saling hapus kelas .active)
+// 8. Event Listener Toggle Active Class
 function attachActiveListeners() {
     document.querySelectorAll('.grid-pick').forEach(grid => {
         const items = grid.querySelectorAll('.pick, .pay');
@@ -148,5 +240,6 @@ function attachActiveListeners() {
     });
 }
 
+// 9. Dynamic Year Footer
 const yearEl = document.getElementById("year");
 if (yearEl) yearEl.textContent = new Date().getFullYear();
