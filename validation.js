@@ -56,25 +56,31 @@ document.addEventListener('click', function (e) {
         paymentMethod: paymentMethod
     };
 
-    fetch('/api/validation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderPayload)
+fetch('/api/validation', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(orderPayload)
+})
+    .then(async response => {
+        const data = await response.json().catch(() => null);
+        if (!response.ok) {
+            throw new Error((data && data.message) || `Server Error (Status ${response.status})`);
+        }
+        return data;
     })
-        .then(response => response.json())
-        .then(data => {
-            if (data.result || data.success === true) {
-                alert('Pesanan berhasil diproses!');
-            } else {
-                alert('Pesanan gagal: ' + (data.message || 'Cek kembali data Anda'));
-            }
-        })
-        .catch(error => {
-            console.error('Error memproses pesanan:', error);
-            alert('Terjadi kesalahan jaringan/sistem');
-        })
-        .finally(() => {
-            buying.textContent = originalText;
-            buying.disabled = false;
-        });
+    .then(data => {
+        if (data.success || data.result) {
+            alert('Pesanan berhasil diproses!');
+        } else {
+            alert('Pesanan gagal: ' + (data.message || 'Cek kembali data Anda'));
+        }
+    })
+    .catch(error => {
+        console.error('Error memproses pesanan:', error);
+        alert('Terjadi kesalahan: ' + error.message);
+    })
+    .finally(() => {
+        buying.textContent = originalText;
+        buying.disabled = false;
+    });
 });
